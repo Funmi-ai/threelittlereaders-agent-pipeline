@@ -16,6 +16,8 @@ A relay of 12 narrowly-scoped Claude Code agents, one per specialist job, handin
 
 LLMs are probabilistic. Most of the work around them — scoring, logging, file writes, API calls — isn't, and shouldn't be treated like it is. Chaining five steps at 90% reliability each only compounds to about 59% success end to end. So the system pushes everything repeatable into deterministic code, and keeps the model's job to the calls that actually need judgement.
 
+The framework underneath is Nick Saraev's directive/orchestration/execution agent template, used here as the base. The agent team built on top of it is my design.
+
 Three layers, used by every agent here:
 
 1. **Directive** (`directives/`) — an SOP in Markdown: the goal, the inputs, which tools to use, what counts as an edge case. Written like a brief to a capable employee, not a prompt.
@@ -66,7 +68,7 @@ Trigger & log → ★ confirm moment → Hooks → ★ pick → Copy → Bridge 
 
 ## My contribution
 
-Designed and built solo: every agent definition, every directive, the tracker schema, the Instagram API sync (including its own token-refresh handling), and the model-allocation decisions across both pipelines.
+I designed the agent team: which roles exist, what each one owns, how work passes between them through the shared post file, and which roles get the more expensive model. Claude Code wrote the agent definitions, directives and scripts from that direction, including the Instagram API sync and its token-refresh handling. The three-layer framework underneath is Nick Saraev's (see Architecture).
 
 ## Reliability considerations
 
