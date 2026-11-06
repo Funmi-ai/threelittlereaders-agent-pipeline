@@ -4,7 +4,15 @@ A 12-agent Claude Code system that runs two live content pipelines end to end: t
 
 This is the actual system in production, with the account's personal data (trackers, audience research, real posts) stripped out — what's here is the architecture, the agent definitions, and the deterministic scripts underneath them.
 
-## Why it's built this way
+## Problem
+
+Producing consistent, on-voice content at the pace a real account needs means doing several specialist jobs every time — research, hook-writing, copywriting, design, an honest read on whether a draft will actually land — without a team to hand them to.
+
+## Solution
+
+A relay of 12 narrowly-scoped Claude Code agents, one per specialist job, handing work forward through a shared file instead of chat history.
+
+## Architecture
 
 LLMs are probabilistic. Most of the work around them — scoring, logging, file writes, API calls — isn't, and shouldn't be treated like it is. Chaining five steps at 90% reliability each only compounds to about 59% success end to end. So the system pushes everything repeatable into deterministic code, and keeps the model's job to the calls that actually need judgement.
 
@@ -55,6 +63,24 @@ Trigger & log → ★ confirm moment → Hooks → ★ pick → Copy → Bridge 
 - **The baton** — one file per post carries every stage's output forward. No agent needs the chat history, so any stage can run cold, in its own session.
 - **The status ladder** — a post's status is just the name of the last stage finished (`Idea → Scheduled → Briefed → Hooked → Drafted → Built → Approved → Posted`). One command answers "what's stuck?" for the whole pipeline.
 - **Self-annealing** — when a step breaks (a rate limit, a missing field), the fix goes back into the directive, not just the code, so the next run starts already knowing what the last one learned.
+
+## My contribution
+
+Designed and built solo: every agent definition, every directive, the tracker schema, the Instagram API sync (including its own token-refresh handling), and the model-allocation decisions across both pipelines.
+
+## Reliability considerations
+
+Not a durable-execution system — no retry or backoff logic on any API call. What it does have, verified in `execution/instagram_sync.py`: a token-refresh routine that degrades gracefully rather than failing hard. If a scheduled refresh fails, it logs a clear, non-fatal warning and keeps the current token working until it actually expires, rather than crashing the pipeline over a renewable credential. The status ladder also means a stuck post is visible by inspection, not by something silently failing.
+
+## Commercial relevance
+
+The weakest subject-matter fit to a technical sales/dev-tools buyer of anything in this portfolio — this is a content-marketing system, not a sales or CRM one. What it's the strongest evidence for is multi-agent orchestration at production scale, and a real, deliberate cost/capability tradeoff (which of 12 roles get the expensive model, and why) rather than throwing the biggest model at every step.
+
+## Limitations
+
+- No automated tests.
+- No retry or backoff beyond the token-refresh graceful-degradation path above.
+- Built for one account's workflow; the directives encode this account's voice and audience, not a general-purpose content system.
 
 ## Structure
 
